@@ -4,6 +4,7 @@ import com.project.image.segmentation.DTOs.SegmentationResult;
 import com.project.image.segmentation.exceptions.SegmentationException;
 import com.project.image.segmentation.service.SegmentationService;
 import com.project.image.segmentation.service.StorageService;
+import com.project.image.segmentation.service.OpenCVSegmentationService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -31,20 +32,23 @@ import javax.imageio.ImageIO;
 public class SegmentationController {
     private static final Logger log = LoggerFactory.getLogger(SegmentationController.class);
 
-    // Поддържани формати на изображения
     private static final List<String> SUPPORTED_FORMATS = Arrays.asList(
             "image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp"
     );
 
     private final SegmentationService segmentationService;
     private final StorageService storageService;
+    private final OpenCVSegmentationService openCvService;
 
     @Value("${app.segmentation.default-min-region-size:50}")
     private int defaultMinRegionSize;
 
-    public SegmentationController(SegmentationService segmentationService, StorageService storageService) {
+    public SegmentationController(SegmentationService segmentationService,
+                                  StorageService storageService,
+                                  OpenCVSegmentationService openCvService) {
         this.segmentationService = segmentationService;
         this.storageService = storageService;
+        this.openCvService = openCvService;
     }
 
     @GetMapping("/segment")
@@ -64,31 +68,51 @@ public class SegmentationController {
             Model model
     ) throws IOException {
 
-        // Валидация на файла
         validateUploadedFile(file);
 
         log.info("Processing file: {} ({}KB), minRegionSize: {}",
                 file.getOriginalFilename(), file.getSize() / 1024, minRegionSize);
 
-        // Запазване на оригиналния файл
         var storedOriginal = storageService.store(file);
         log.debug("File stored as: {}", storedOriginal.filename());
 
-        // Зареждане и валидация на изображението
         BufferedImage input = loadAndValidateImage(file);
 
+        // В handleUpload метода, замени try блока с този:
+
         try {
-            // Извършване на сегментацията
-            SegmentationResult result = segmentationService.segment(input, minRegionSize);
+            // K-means сегментация (традиционна)
+            SegmentationResult kmeansResult = segmentationService.segment(input, minRegionSize);
+            var kmeansOverlay = storageService.storeResultImage(kmeansResult.outlinePng());
+            var kmeansMask = storageService.storeResultImage(kmeansResult.maskPng());
 
-            // Запазване на резултатите
-            var overlayStored = storageService.storeResultImage(result.outlinePng());
-            var maskStored = storageService.storeResultImage(result.maskPng());
+            // GrabCut сегментация (ML-подобна)
+            SegmentationResult grabCutResult = openCvService.segmentWithGrabCut(input);
+            var grabCutOverlay = storageService.storeResultImage(grabCutResult.outlinePng());
+            var grabCutMask = storageService.storeResultImage(grabCutResult.maskPng());
 
-            // Подготовка на модела за шаблона
-            populateResultModel(model, storedOriginal, overlayStored, maskStored, result);
+            // Популиране на модела
+            model.addAttribute("originalPath", "/" + storedOriginal.relativeWebPath());
 
-            log.info("Segmentation completed successfully for {}", file.getOriginalFilename());
+            // K-means резултати
+            model.addAttribute("kmeansOverlayPath", "/" + kmeansOverlay.relativeWebPath());
+            model.addAttribute("kmeansMaskPath", "/" + kmeansMask.relativeWebPath());
+            model.addAttribute("kmeansSegments", kmeansResult.segmentCount());
+            model.addAttribute("kmeansAreaPercent", String.format("%.2f",
+                    kmeansResult.areasPercent().stream().mapToDouble(Double::doubleValue).sum()));
+
+            // GrabCut резултати
+            model.addAttribute("grabCutOverlayPath", "/" + grabCutOverlay.relativeWebPath());
+            model.addAttribute("grabCutMaskPath", "/" + grabCutMask.relativeWebPath());
+            model.addAttribute("grabCutAreaPercent", String.format("%.2f",
+                    grabCutResult.areasPercent().stream().mapToDouble(Double::doubleValue).sum()));
+
+            // Общи данни
+            model.addAttribute("width", input.getWidth());
+            model.addAttribute("height", input.getHeight());
+            model.addAttribute("totalPixels", input.getWidth() * input.getHeight());
+
+            log.info("All segmentation methods completed successfully for {}", file.getOriginalFilename());
             return "result";
 
         } catch (SegmentationException e) {
@@ -112,7 +136,6 @@ public class SegmentationController {
             );
         }
 
-        // Проверка за максимален размер (допълнително към Spring конфигурацията)
         long maxSize = 10 * 1024 * 1024; // 10MB
         if (file.getSize() > maxSize) {
             throw new IllegalArgumentException("Файлът е твърде голям. Максимален размер: 10MB");
@@ -129,7 +152,6 @@ public class SegmentationController {
             throw new SegmentationException("Файлът не е валидно изображение или е повреден.");
         }
 
-        // Проверка на размерите
         if (input.getWidth() < 50 || input.getHeight() < 50) {
             throw new SegmentationException("Изображението е твърде малко. Минимален размер: 50x50 пиксела");
         }
@@ -142,41 +164,6 @@ public class SegmentationController {
         return input;
     }
 
-    private void populateResultModel(Model model, StorageService.StoredFile original,
-                                     StorageService.StoredFile overlay, StorageService.StoredFile mask,
-                                     SegmentationResult result) {
-
-        model.addAttribute("originalPath", "/" + original.relativeWebPath());
-        model.addAttribute("overlayPath", "/" + overlay.relativeWebPath());
-        model.addAttribute("maskPath", "/" + mask.relativeWebPath());
-
-        // Изчисляване на общата площ
-        int totalAreaPx = result.areasPx().stream().mapToInt(Integer::intValue).sum();
-        double totalAreaPercent = result.areasPercent().stream().mapToDouble(Double::doubleValue).sum();
-
-        model.addAttribute("segments", result.segmentCount());
-        model.addAttribute("width", result.width());
-        model.addAttribute("height", result.height());
-        model.addAttribute("areaPx", totalAreaPx);
-        model.addAttribute("areaPercent", String.format("%.2f", totalAreaPercent));
-        model.addAttribute("threshold", result.threshold());
-
-        // Детайлна информация за всеки сегмент
-        model.addAttribute("segmentDetails", createSegmentDetails(result));
-    }
-
-    private List<SegmentDetails> createSegmentDetails(SegmentationResult result) {
-        List<SegmentDetails> details = new ArrayList<>();
-        for (int i = 0; i < result.segmentCount(); i++) {
-            details.add(new SegmentDetails(
-                    i + 1,
-                    result.areasPx().get(i),
-                    String.format("%.2f", result.areasPercent().get(i))
-            ));
-        }
-        return details;
-    }
-
     private String getSuggestionForError(String errorMessage) {
         if (errorMessage.contains("No suitable objects found")) {
             return "Опитайте с по-малък минимален размер на региона или изображение с по-контрастни обекти.";
@@ -184,10 +171,11 @@ public class SegmentationController {
             return "Качете по-голямо изображение (минимум 50x50 пиксела).";
         } else if (errorMessage.contains("corrupted")) {
             return "Опитайте с друго изображение във формат PNG или JPEG.";
+        } else if (errorMessage.contains("OpenCV") || errorMessage.contains("GrabCut") || errorMessage.contains("Watershed")) {
+            return "OpenCV алгоритмите са временно недостъпни. Използва се K-means сегментация.";
         }
         return "Опитайте с различни параметри или друго изображение.";
     }
 
-    // Помощен клас за детайлите на сегментите
     public static record SegmentDetails(int id, int areaPx, String areaPercent) {}
 }

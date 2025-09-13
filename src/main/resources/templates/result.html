@@ -1,4 +1,3 @@
-<!-- Подобрен result.html без емотиконки -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="bg">
 <head>
@@ -6,79 +5,153 @@
     <title>Резултат от сегментацията</title>
     <link rel="stylesheet" th:href="@{/css/main.css}" />
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; }
-        header { background: #fff; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        header nav { display: flex; gap: 12px; align-items: center; padding: 12px 20px; max-width: 1200px; margin: 0 auto; }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: #f8fafc;
+          margin: 0;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+
+        header {
+          background: #fff;
+          border-bottom: 1px solid #e2e8f0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        header nav {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          padding: 12px 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
         header a, header button {
-          padding: 8px 16px; border: 1px solid #cbd5e1; background: #fff;
-          border-radius: 6px; text-decoration: none; color: #475569; font-weight: 500;
+          padding: 8px 16px;
+          border: 1px solid #cbd5e1;
+          background: #fff;
+          border-radius: 6px;
+          text-decoration: none;
+          color: #475569;
+          font-weight: 500;
           transition: all 0.2s ease;
         }
-        header a:hover, header button:hover { background: #f1f5f9; border-color: #94a3b8; }
 
-        main.container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        header a:hover, header button:hover {
+          background: #f1f5f9;
+          border-color: #94a3b8;
+        }
 
-        h1 { color: #1e293b; margin-bottom: 24px; font-size: 1.8rem; font-weight: 600; }
+        main.container {
+          max-width: 1400px;
+          margin: 24px auto;
+          padding: 0 16px;
+          flex: 1;
+        }
+
+        h1 {
+          color: #1e293b;
+          margin-bottom: 24px;
+          font-size: 1.8rem;
+          font-weight: 600;
+        }
 
         .success-banner {
           background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: white; padding: 16px 24px; border-radius: 8px; margin-bottom: 32px;
+          color: white;
+          padding: 16px 24px;
+          border-radius: 8px;
+          margin-bottom: 32px;
           box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
         }
-        .success-banner h2 { margin: 0; font-size: 1.1rem; font-weight: 500; }
 
-        .results-grid {
-          display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-          gap: 24px; margin-bottom: 32px;
+        .success-banner h2 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 500;
         }
 
         .image-card {
-          background: #fff; border-radius: 10px; padding: 20px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+          background: #fff;
+          border-radius: 10px;
+          padding: 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          border: 1px solid #e2e8f0;
         }
+
         .image-card h3 {
-          margin: 0 0 16px 0; font-size: 1rem; font-weight: 600;
-          color: #374151; text-align: center;
+          margin: 0 0 16px 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          text-align: center;
         }
+
         .image-card img {
-          width: 100%; height: auto; border-radius: 6px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.1); cursor: pointer;
+          width: 100%;
+          height: auto;
+          border-radius: 6px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+          cursor: pointer;
         }
 
         .statistics-section {
-          background: #fff; border-radius: 10px; padding: 24px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+          background: #fff;
+          border-radius: 10px;
+          padding: 24px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          border: 1px solid #e2e8f0;
         }
+
         .statistics-section h2 {
-          margin: 0 0 20px 0; font-size: 1.4rem; font-weight: 600; color: #1e293b;
+          margin: 0 0 20px 0;
+          font-size: 1.4rem;
+          font-weight: 600;
+          color: #1e293b;
         }
 
-        .stats-grid {
-          display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 16px; margin-bottom: 24px;
-        }
-        .stat-card {
-          background: #f8fafc; padding: 16px; border-radius: 8px;
-          border-left: 4px solid #3b82f6; text-align: center;
-        }
-        .stat-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
-        .stat-label { font-size: 0.9rem; color: #64748b; }
-
-        .segment-details { background: #f8fafc; padding: 20px; border-radius: 8px; }
-        .segment-details h3 { margin: 0 0 16px 0; font-size: 1.1rem; color: #374151; }
-        .detail-row {
-          display: flex; justify-content: space-between; align-items: center;
-          padding: 12px 0; border-bottom: 1px solid #e2e8f0;
-        }
-        .detail-row:last-child { border-bottom: none; }
-
-        .actions { margin-top: 24px; }
         .btn-primary {
-          background: #3b82f6; color: white; padding: 12px 24px;
-          border-radius: 8px; text-decoration: none; margin-right: 12px;
-          display: inline-block; font-weight: 500; transition: background 0.2s ease;
+          background: #3b82f6;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          text-decoration: none;
+          margin-right: 12px;
+          display: inline-block;
+          font-weight: 500;
+          transition: background 0.2s ease;
         }
-        .btn-primary:hover { background: #2563eb; }
+
+        .btn-primary:hover {
+          background: #2563eb;
+        }
+
+        footer {
+          text-align: center;
+          padding: 20px;
+          color: #64748b;
+          font-size: 0.9rem;
+          border-top: 1px solid #e2e8f0;
+          background: #fff;
+          margin-top: auto;
+        }
+
+        @media (max-width: 1024px) {
+          div[style*="display: flex"] .image-card {
+            flex: 1 1 45% !important;
+          }
+        }
+        @media (max-width: 768px) {
+          div[style*="display: flex"] {
+            flex-direction: column !important;
+          }
+          div[style*="display: flex"] .image-card {
+            flex: none !important;
+          }
+        }
     </style>
 </head>
 <body>
@@ -98,67 +171,91 @@
 
     <div class="success-banner">
         <h2>Сегментацията завърши успешно</h2>
-        <p style="margin: 4px 0 0 0; opacity: 0.9;">Идентифициран е основният обект в изображението</p>
+        <p style="margin: 4px 0 0 0; opacity: 0.9;">Сравнение между различни алгоритми за сегментация</p>
     </div>
 
-    <div class="results-grid">
-        <div class="image-card">
-            <h3>Оригинално изображение</h3>
-            <img th:src="@{${originalPath}}" alt="Оригинално изображение" />
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 0 auto 32px;">
+
+        <div class="image-card" style="padding: 12px;">
+            <h3 style="font-size: 0.95rem; margin-bottom: 10px;">Оригинално изображение</h3>
+            <img th:src="@{${originalPath}}" alt="Оригинално" style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px;" />
+            <div style="text-align: center; margin-top: 6px; font-size: 0.8rem; color: #64748b;">
+                <span th:text="${width + '×' + height}">194×260</span> пиксела
+            </div>
         </div>
 
-        <div class="image-card">
-            <h3>Детектиран обект</h3>
-            <img th:src="@{${overlayPath}}" alt="Детектиран обект с контур" />
+        <div class="image-card" style="padding: 12px;">
+            <h3 style="font-size: 0.95rem; margin-bottom: 10px;">Сегментация без модел</h3>
+            <img th:src="@{${kmeansOverlayPath}}" alt="K-means" style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px;" />
+            <div style="text-align: center; margin-top: 6px;">
+                <div style="font-size: 0.9rem; color: #64748b; font-weight: 500;">Традиционен подход</div>
+                <div style="font-weight: 600; color: #1e293b;" th:text="${kmeansSegments + ' сегмента'}">4 сегмента</div>
+                <div style="font-size: 0.85rem; color: #1e293b;" th:text="${kmeansAreaPercent + '% покритие'}">30.71% покритие</div>
+            </div>
         </div>
 
-        <div class="image-card">
-            <h3>Маска на сегментацията</h3>
-            <img th:src="@{${maskPath}}" alt="Маска на сегментацията" />
+        <div class="image-card" style="padding: 12px;">
+            <h3 style="font-size: 0.95rem; margin-bottom: 10px;">Сегментация с модел</h3>
+            <img th:src="@{${grabCutOverlayPath}}" alt="GrabCut" style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px;" />
+            <div style="text-align: center; margin-top: 6px;">
+                <div style="font-size: 0.9rem; color: #64748b; font-weight: 500;">ML подход</div>
+                <div style="font-weight: 600; color: #1e293b;">1 обект</div>
+                <div style="font-size: 0.85rem; color: #1e293b;" th:text="${grabCutAreaPercent + '% покритие'}">45.20% покритие</div>
+            </div>
         </div>
+
     </div>
 
     <div class="statistics-section">
-        <h2>Детайли на сегментацията</h2>
+        <h2>Сравнение на алгоритмите</h2>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" th:text="${segments}">1</div>
-                <div class="stat-label">Обекти</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-value" th:text="${areaPercent + '%'}">29.74%</div>
-                <div class="stat-label">Покритие</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-value" th:text="${areaPx}">15,003</div>
-                <div class="stat-label">Пиксели</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-value" th:text="${width + '×' + height}">194×260</div>
-                <div class="stat-label">Резолюция</div>
-            </div>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+                <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Алгоритъм</th>
+                    <th style="padding: 12px; text-align: center; font-weight: 600; color: #374151;">Тип</th>
+                    <th style="padding: 12px; text-align: center; font-weight: 600; color: #374151;">Сегменти</th>
+                    <th style="padding: 12px; text-align: center; font-weight: 600; color: #374151;">Покритие</th>
+                    <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Характеристики</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 12px; font-weight: 500;">K-means</td>
+                    <td style="padding: 12px; text-align: center; color: #6b7280;">Сегментация без модел</td>
+                    <td style="padding: 12px; text-align: center;" th:text="${kmeansSegments}">5</td>
+                    <td style="padding: 12px; text-align: center; color: #1e293b;" th:text="${kmeansAreaPercent + '%'}">56.10%</td>
+                    <td style="padding: 12px; font-size: 0.9rem; color: #64748b;">Традиционен подход - цветова сегментация, множество региони</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; font-weight: 500;">GrabCut</td>
+                    <td style="padding: 12px; text-align: center; color: #6b7280;">Сегментация с обучен модел</td>
+                    <td style="padding: 12px; text-align: center;">1</td>
+                    <td style="padding: 12px; text-align: center; color: #1e293b;" th:text="${grabCutAreaPercent + '%'}">45.20%</td>
+                    <td style="padding: 12px; font-size: 0.9rem; color: #64748b;">ML подход - foreground/background разделение</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
 
-        <div class="segment-details" th:if="${segmentDetails}">
-            <h3>Детайли по обекти</h3>
-            <div th:each="detail : ${segmentDetails}" class="detail-row">
-                <span>Обект <span th:text="${detail.id}">1</span></span>
-                <span>
-          <strong th:text="${detail.areaPx}">14,748</strong> px
-          (<span th:text="${detail.areaPercent + '%'}">29.24%</span>)
-        </span>
-            </div>
+        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-top: 20px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: #374151;">Анализ на резултатите</h3>
+            <ul style="margin: 0; padding-left: 20px; color: #64748b; font-size: 0.9rem; line-height: 1.6;">
+                <li><strong>Сегментация без модел</strong> - Традиционен подход с K-means, детектира множество цветови сегменти</li>
+                <li><strong>Сегментация с модел</strong> - ML подход с GrabCut, фокусира се на единен основен обект с по-прецизни граници</li>
+            </ul>
         </div>
 
-        <div class="actions">
-            <a th:href="@{/segment}" class="btn-primary">Сегментирай друго изображение</a>
+        <div class="actions" style="margin-top: 24px;">
+            <a th:href="@{/segment}" class="btn-primary">Тествай с друго изображение</a>
         </div>
     </div>
 </main>
+
+<footer>
+    <p>&copy; 2025 Image Segmentation Demo</p>
+</footer>
 
 <script>
     // Добавяме click-to-zoom за изображенията
