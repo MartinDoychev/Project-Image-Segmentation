@@ -1,0 +1,173 @@
+<!-- Подобрен result.html без емотиконки -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="bg">
+<head>
+    <meta charset="UTF-8" />
+    <title>Резултат от сегментацията</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" />
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; }
+        header { background: #fff; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        header nav { display: flex; gap: 12px; align-items: center; padding: 12px 20px; max-width: 1200px; margin: 0 auto; }
+        header a, header button {
+          padding: 8px 16px; border: 1px solid #cbd5e1; background: #fff;
+          border-radius: 6px; text-decoration: none; color: #475569; font-weight: 500;
+          transition: all 0.2s ease;
+        }
+        header a:hover, header button:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+        main.container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+        h1 { color: #1e293b; margin-bottom: 24px; font-size: 1.8rem; font-weight: 600; }
+
+        .success-banner {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white; padding: 16px 24px; border-radius: 8px; margin-bottom: 32px;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+        }
+        .success-banner h2 { margin: 0; font-size: 1.1rem; font-weight: 500; }
+
+        .results-grid {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 24px; margin-bottom: 32px;
+        }
+
+        .image-card {
+          background: #fff; border-radius: 10px; padding: 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+        }
+        .image-card h3 {
+          margin: 0 0 16px 0; font-size: 1rem; font-weight: 600;
+          color: #374151; text-align: center;
+        }
+        .image-card img {
+          width: 100%; height: auto; border-radius: 6px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.1); cursor: pointer;
+        }
+
+        .statistics-section {
+          background: #fff; border-radius: 10px; padding: 24px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+        }
+        .statistics-section h2 {
+          margin: 0 0 20px 0; font-size: 1.4rem; font-weight: 600; color: #1e293b;
+        }
+
+        .stats-grid {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+          background: #f8fafc; padding: 16px; border-radius: 8px;
+          border-left: 4px solid #3b82f6; text-align: center;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+        .stat-label { font-size: 0.9rem; color: #64748b; }
+
+        .segment-details { background: #f8fafc; padding: 20px; border-radius: 8px; }
+        .segment-details h3 { margin: 0 0 16px 0; font-size: 1.1rem; color: #374151; }
+        .detail-row {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 12px 0; border-bottom: 1px solid #e2e8f0;
+        }
+        .detail-row:last-child { border-bottom: none; }
+
+        .actions { margin-top: 24px; }
+        .btn-primary {
+          background: #3b82f6; color: white; padding: 12px 24px;
+          border-radius: 8px; text-decoration: none; margin-right: 12px;
+          display: inline-block; font-weight: 500; transition: background 0.2s ease;
+        }
+        .btn-primary:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+<header>
+    <nav>
+        <a th:href="@{/}">Начало</a>
+        <a th:href="@{/segment}">Нова сегментация</a>
+        <form th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Изход</button>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        </form>
+    </nav>
+</header>
+
+<main class="container">
+    <h1>Резултат от сегментацията</h1>
+
+    <div class="success-banner">
+        <h2>Сегментацията завърши успешно</h2>
+        <p style="margin: 4px 0 0 0; opacity: 0.9;">Идентифициран е основният обект в изображението</p>
+    </div>
+
+    <div class="results-grid">
+        <div class="image-card">
+            <h3>Оригинално изображение</h3>
+            <img th:src="@{${originalPath}}" alt="Оригинално изображение" />
+        </div>
+
+        <div class="image-card">
+            <h3>Детектиран обект</h3>
+            <img th:src="@{${overlayPath}}" alt="Детектиран обект с контур" />
+        </div>
+
+        <div class="image-card">
+            <h3>Маска на сегментацията</h3>
+            <img th:src="@{${maskPath}}" alt="Маска на сегментацията" />
+        </div>
+    </div>
+
+    <div class="statistics-section">
+        <h2>Детайли на сегментацията</h2>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" th:text="${segments}">1</div>
+                <div class="stat-label">Обекти</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-value" th:text="${areaPercent + '%'}">29.74%</div>
+                <div class="stat-label">Покритие</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-value" th:text="${areaPx}">15,003</div>
+                <div class="stat-label">Пиксели</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-value" th:text="${width + '×' + height}">194×260</div>
+                <div class="stat-label">Резолюция</div>
+            </div>
+        </div>
+
+        <div class="segment-details" th:if="${segmentDetails}">
+            <h3>Детайли по обекти</h3>
+            <div th:each="detail : ${segmentDetails}" class="detail-row">
+                <span>Обект <span th:text="${detail.id}">1</span></span>
+                <span>
+          <strong th:text="${detail.areaPx}">14,748</strong> px
+          (<span th:text="${detail.areaPercent + '%'}">29.24%</span>)
+        </span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a th:href="@{/segment}" class="btn-primary">Сегментирай друго изображение</a>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Добавяме click-to-zoom за изображенията
+    document.querySelectorAll('.image-card img').forEach(img => {
+      img.addEventListener('click', function() {
+        window.open(this.src, '_blank');
+      });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сегментация на изображения</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" />
+    <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: #f8fafc;
+          margin: 0;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+
+        header {
+          background: #fff;
+          border-bottom: 1px solid #e2e8f0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        header nav {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          padding: 12px 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        header a, header button {
+          padding: 8px 16px;
+          border: 1px solid #cbd5e1;
+          background: #fff;
+          border-radius: 6px;
+          text-decoration: none;
+          color: #475569;
+          font-weight: 500;
+          transition: all 0.2s ease;
+        }
+
+        header a:hover, header button:hover {
+          background: #f1f5f9;
+          border-color: #94a3b8;
+        }
+
+        main {
+          flex: 1;
+          padding: 20px;
+        }
+
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        h1 {
+          color: #1e293b;
+          margin-bottom: 24px;
+          font-size: 1.8rem;
+          font-weight: 600;
+        }
+
+        .error-alert {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin-bottom: 24px;
+        }
+
+        .suggestion {
+          background: #f0f9ff;
+          border: 1px solid #bae6fd;
+          color: #0369a1;
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin-bottom: 24px;
+        }
+
+        .upload-section {
+          background: #fff;
+          border-radius: 10px;
+          padding: 32px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          border: 1px solid #e2e8f0;
+          margin-bottom: 24px;
+        }
+
+        .form-group {
+          margin-bottom: 24px;
+        }
+
+        .form-label {
+          display: block;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 8px;
+          font-size: 1rem;
+        }
+
+        .file-input-wrapper {
+          position: relative;
+          display: inline-block;
+          width: 100%;
+        }
+
+        .file-input {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px dashed #d1d5db;
+          border-radius: 8px;
+          background: #f9fafb;
+          font-size: 1rem;
+          transition: all 0.2s ease;
+          cursor: pointer;
+        }
+
+        .file-input:hover {
+          border-color: #9ca3af;
+          background: #f3f4f6;
+        }
+
+        .file-input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          background: #fff;
+        }
+
+        .number-input {
+          width: 200px;
+          padding: 12px 16px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 1rem;
+          transition: border-color 0.2s ease;
+        }
+
+        .number-input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 1px #3b82f6;
+        }
+
+        .input-description {
+          font-size: 0.875rem;
+          color: #64748b;
+          margin-top: 6px;
+        }
+
+        .process-button {
+          background: #3b82f6;
+          color: white;
+          padding: 14px 32px;
+          border: none;
+          border-radius: 8px;
+          font-size: 1.1rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s ease;
+          width: 100%;
+          max-width: 200px;
+        }
+
+        .process-button:hover {
+          background: #2563eb;
+        }
+
+        .process-button:disabled {
+          background: #9ca3af;
+          cursor: not-allowed;
+        }
+
+        .info-section {
+          background: #fff;
+          border-radius: 10px;
+          padding: 24px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          border: 1px solid #e2e8f0;
+        }
+
+        .info-section h2 {
+          margin: 0 0 16px 0;
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .supported-formats {
+          font-size: 0.9rem;
+          color: #64748b;
+        }
+
+        .tips-list {
+          list-style: none;
+          padding: 0;
+          margin: 16px 0 0 0;
+        }
+
+        .tips-list li {
+          padding: 8px 0;
+          color: #64748b;
+          font-size: 0.9rem;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .tips-list li:last-child {
+          border-bottom: none;
+        }
+
+        .tips-list li strong {
+          color: #374151;
+        }
+
+        footer {
+          text-align: center;
+          padding: 20px;
+          color: #64748b;
+          font-size: 0.9rem;
+          border-top: 1px solid #e2e8f0;
+          background: #fff;
+          margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+          .upload-section, .info-section {
+            padding: 20px;
+          }
+
+          .number-input {
+            width: 100%;
+          }
+
+          h1 {
+            font-size: 1.5rem;
+          }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <nav>
+        <a th:href="@{/}">Начало</a>
+        <a th:href="@{/segment}">Сегментация</a>
+        <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
+            <button type="submit">Изход</button>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        </form>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+        <h1>Сегментация на изображения</h1>
+
+        <div th:if="${error}" class="error-alert" th:text="${error}"></div>
+        <div th:if="${suggestion}" class="suggestion" th:text="${suggestion}"></div>
+
+        <div class="upload-section">
+            <form th:action="@{/segment}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label" for="fileInput">Изберете изображение</label>
+                    <input
+                            type="file"
+                            id="fileInput"
+                            name="file"
+                            accept="image/*"
+                            required
+                            class="file-input"
+                    />
+                    <div class="input-description">
+                        Поддържани формати: <span th:text="${supportedFormats}">JPEG, PNG, GIF, BMP, WebP</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="minRegionSize">Минимален размер на регион (пиксели)</label>
+                    <input
+                            type="number"
+                            id="minRegionSize"
+                            name="minRegionSize"
+                            min="10"
+                            max="5000"
+                            th:value="${defaultMinRegionSize}"
+                            class="number-input"
+                    />
+                    <div class="input-description">
+                        По-малки стойности ще запазят повече детайли, но могат да включат шум
+                    </div>
+                </div>
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="process-button">Обработи изображението</button>
+            </form>
+        </div>
+
+        <div class="info-section">
+            <h2>Съвети за по-добри резултати</h2>
+            <ul class="tips-list">
+                <li><strong>Контраст:</strong> Използвайте изображения с ясно разграничение между обект и фон</li>
+                <li><strong>Осветление:</strong> Избягвайте силни сенки и отражения</li>
+                <li><strong>Размер:</strong> Оптимални са изображения между 200x200 и 1000x1000 пиксела</li>
+                <li><strong>Обекти:</strong> Най-добре работи с обекти с еднороден цвят</li>
+                <li><strong>Фон:</strong> Прости, еднородни фонове дават по-добри резултати</li>
+            </ul>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; 2025 Image Segmentation Demo</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Segmentation - Начало</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" />
+    <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: #f8fafc;
+          margin: 0;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+
+        header {
+          background: #fff;
+          border-bottom: 1px solid #e2e8f0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        header nav {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          padding: 12px 20px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        header a, header button {
+          padding: 8px 16px;
+          border: 1px solid #cbd5e1;
+          background: #fff;
+          border-radius: 6px;
+          text-decoration: none;
+          color: #475569;
+          font-weight: 500;
+          transition: all 0.2s ease;
+        }
+
+        header a:hover, header button:hover {
+          background: #f1f5f9;
+          border-color: #94a3b8;
+        }
+
+        main {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+        }
+
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        h1 {
+          color: #1e293b;
+          margin-bottom: 16px;
+          font-size: 2rem;
+          font-weight: 600;
+        }
+
+        .description {
+          color: #64748b;
+          font-size: 1.1rem;
+          margin-bottom: 40px;
+          line-height: 1.6;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .error-alert {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin-bottom: 24px;
+        }
+
+        .cta-button {
+          background: #3b82f6;
+          color: white;
+          padding: 14px 28px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 1.1rem;
+          display: inline-block;
+          transition: background 0.2s ease;
+          margin-bottom: 40px;
+        }
+
+        .cta-button:hover {
+          background: #2563eb;
+        }
+
+        .features-section {
+          background: #fff;
+          border-radius: 10px;
+          padding: 32px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          border: 1px solid #e2e8f0;
+          text-align: left;
+        }
+
+        .features-section h2 {
+          margin: 0 0 24px 0;
+          font-size: 1.4rem;
+          font-weight: 600;
+          color: #1e293b;
+          text-align: center;
+        }
+
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+        }
+
+        .feature-item {
+          text-align: center;
+        }
+
+        .feature-title {
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 8px;
+        }
+
+        .feature-desc {
+          font-size: 0.9rem;
+          color: #64748b;
+          line-height: 1.5;
+        }
+
+        footer {
+          text-align: center;
+          padding: 20px;
+          color: #64748b;
+          font-size: 0.9rem;
+          border-top: 1px solid #e2e8f0;
+          background: #fff;
+          margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+          .features-grid {
+            grid-template-columns: 1fr;
+          }
+
+          h1 {
+            font-size: 1.6rem;
+          }
+
+          .description {
+            font-size: 1rem;
+          }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <nav>
+        <a th:href="@{/}">Начало</a>
+        <a th:href="@{/segment}">Сегментация</a>
+        <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
+            <button type="submit">Изход</button>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        </form>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+        <h1>Сегментация на изображения</h1>
+
+        <p class="description">
+            Качете изображение и алгоритъмът ще идентифицира основните обекти използвайки комбинация от K-means кластеризация и морфологични операции.
+        </p>
+
+        <div th:if="${error}" class="error-alert" th:text="${error}"></div>
+
+        <a class="cta-button" th:href="@{/segment}">Започни сегментация</a>
+
+        <div class="features-section">
+            <h2>Как работи</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-title">Анализ на цветове</div>
+                    <div class="feature-desc">K-means алгоритъм за групиране на пиксели по цвят</div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-title">Детекция на региони</div>
+                    <div class="feature-desc">Идентифициране на свързани области от интерес</div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-title">Морфологично почистване</div>
+                    <div class="feature-desc">Подобряване на границите и премахване на шум</div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-title">Визуализация</div>
+                    <div class="feature-desc">Генериране на маска, контури и статистики</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; 2025 Image Segmentation Demo</p>
+</footer>
+</body>
+</html>
