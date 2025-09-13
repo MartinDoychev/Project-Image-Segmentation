@@ -53,7 +53,6 @@ public class SegmentationService {
         int k = (w * h < 200 * 200) ? 3 : 4;
         log.debug("Using {} clusters for segmentation", k);
 
-        // Фиксиран seed за консистентност
         int[] cluster = kmeans(lab, n, k, 15, 12345);
         int bgCluster = dominantClusterOnBorder(cluster, w, h, k);
         log.debug("Background cluster identified as: {}", bgCluster);
@@ -123,13 +122,9 @@ public class SegmentationService {
         obj = openingByReconstruction(obj, w, h, 1);
         obj = morphClose8(obj, w, h, 1);
         obj = fillHoles(obj, w, h);
-
-        // Cleanup маската
         obj = cleanupMask(obj, w, h, minRegionSize);
 
-        // Генерираме edges
         boolean[] edge = generateEdges(obj, w, h);
-
         BufferedImage mask = createMaskImage(obj, w, h);
         BufferedImage overlay = createOverlayImage(input, obj, edge, w, h);
         BufferedImage recolored = createRecoloredImage(input, obj, w, h);
@@ -146,21 +141,13 @@ public class SegmentationService {
         );
     }
 
-    // Липсващ метод cleanupMask
     private boolean[] cleanupMask(boolean[] mask, int w, int h, int minRegionSize) {
-        // Морфологично отваряне за премахване на шум
         mask = morphOpen8(mask, w, h, 1);
-
-        // Премахваме малки региони
         mask = removeSmallRegions(mask, w, h, minRegionSize);
-
-        // Морфологично затваряне за свързване на близки части
         mask = morphClose8(mask, w, h, 1);
-
         return mask;
     }
 
-    // Липсващ метод generateEdges
     private boolean[] generateEdges(boolean[] objectMask, int w, int h) {
         boolean[] eroded = erode8(objectMask, w, h);
         boolean[] dilated = dilate8(objectMask, w, h);
@@ -169,11 +156,9 @@ public class SegmentationService {
         for (int i = 0; i < w * h; i++) {
             edges[i] = (dilated[i] && !eroded[i]);
         }
-
         return edges;
     }
 
-    // Липсващ помощен метод removeSmallRegions
     private boolean[] removeSmallRegions(boolean[] mask, int w, int h, int minSize) {
         boolean[] result = new boolean[w * h];
         boolean[] visited = new boolean[w * h];
@@ -184,7 +169,6 @@ public class SegmentationService {
                 int idx = y * w + x;
 
                 if (mask[idx] && !visited[idx]) {
-                    // Започваме флъд фил от тази точка
                     List<Point> region = new ArrayList<>();
                     queue.clear();
                     queue.add(new Point(x, y));
@@ -195,7 +179,6 @@ public class SegmentationService {
                         region.add(p);
                         int px = p.x, py = p.y;
 
-                        // Проверяваме 4-connected съседи
                         int[][] dirs = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
                         for (int[] dir : dirs) {
                             int nx = px + dir[0];
@@ -210,7 +193,6 @@ public class SegmentationService {
                         }
                     }
 
-                    // Ако региона е достатъчно голям, запазваме го
                     if (region.size() >= minSize) {
                         for (Point p : region) {
                             result[p.y * w + p.x] = true;
@@ -219,7 +201,6 @@ public class SegmentationService {
                 }
             }
         }
-
         return result;
     }
 

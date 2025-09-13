@@ -5,9 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
-/**
- * Serves the home page. Thin controller: just routes to a Thymeleaf view.
- */
     @Controller
     public class HomeController {
     private static final Logger log = LoggerFactory.getLogger(HomeController.class);

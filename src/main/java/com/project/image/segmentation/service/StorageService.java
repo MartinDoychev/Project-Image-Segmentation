@@ -16,16 +16,10 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Saves original uploads and result images under a configurable folder on disk.
- * Produces safe, unique filenames and exposes a relative web path for static serving.
- */
 @Service
 public class StorageService {
     private static final Logger log = LoggerFactory.getLogger(StorageService.class);
-
     private final Path rootDir;
-
     public StorageService(@Value("${app.upload.dir:uploads}") String root) {
         this.rootDir = Paths.get(root).toAbsolutePath().normalize();
         try {
@@ -35,15 +29,12 @@ public class StorageService {
             throw new StorageException("Cannot create upload directory: " + rootDir, e);
         }
     }
-    /** Represents a stored file with OS path + web path */
     public record StoredFile(Path path, String filename, String relativeWebPath) {}
-
     public StoredFile store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new StorageException("Empty upload");
         }
         String original = StringUtils.cleanPath(file.getOriginalFilename() == null ? "upload" : file.getOriginalFilename());
-// Simple content-type check (extra validation happens when decoding as image)
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new StorageException("Only image uploads are allowed (received: " + contentType + ")");

@@ -7,9 +7,9 @@ public record SegmentationResult(
         int height,
         int threshold,
         int segmentCount,
-        byte[] maskPng,       // ПЛЪТНА маска на ЧЕРЕН фон (за „Сегментация“)
-        byte[] outlinePng,    // ЧЕРВЕН контур + цианово запълване върху оригинала
-        byte[] recoloredPng,  // Оригинал + обектът оцветен (резервен вариант)
+        byte[] maskPng,
+        byte[] outlinePng,
+        byte[] recoloredPng,
         List<Integer> areasPx,
         List<Double> areasPercent
 ) {}

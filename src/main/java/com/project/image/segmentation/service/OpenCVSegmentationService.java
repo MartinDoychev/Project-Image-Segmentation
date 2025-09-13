@@ -7,8 +7,6 @@ import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -33,34 +31,25 @@ public class OpenCVSegmentationService {
     public SegmentationResult segmentWithGrabCut(BufferedImage input) {
         try {
             log.info("Starting GrabCut segmentation for image {}x{}", input.getWidth(), input.getHeight());
-
-            // Конвертиране към OpenCV Mat
             Mat image = bufferedImageToMat(input);
-
-            // Инициализация на маски и модели
             Mat mask = new Mat();
             Mat bgdModel = new Mat();
             Mat fgdModel = new Mat();
 
-            // Дефиниране на rectangle (10% border от всяка страна)
             int border = Math.min(input.getWidth(), input.getHeight()) / 10;
             Rect rectangle = new Rect(border, border,
                     input.getWidth() - 2*border,
                     input.getHeight() - 2*border);
 
-            // Прилагане на GrabCut алгоритъм
             Imgproc.grabCut(image, mask, rectangle, bgdModel, fgdModel, 5, Imgproc.GC_INIT_WITH_RECT);
 
-            // Създаване на финална маска (само foreground и probable foreground)
             Mat finalMask = new Mat();
             Core.bitwise_or(new Mat(mask.size(), mask.type(), new Scalar(Imgproc.GC_FGD)),
                     new Mat(mask.size(), mask.type(), new Scalar(Imgproc.GC_PR_FGD)), finalMask);
             Core.compare(mask, finalMask, finalMask, Core.CMP_EQ);
 
-            // Конвертиране обратно към boolean array
             boolean[] objectMask = matToBooleanArray(finalMask);
 
-            // Генериране на резултати
             return generateOpenCVResult(input, objectMask, "GrabCut");
 
         } catch (Exception e) {
@@ -77,52 +66,40 @@ public class OpenCVSegmentationService {
             Mat gray = new Mat();
             Mat binary = new Mat();
 
-            // Конвертиране в grayscale
             Imgproc.cvtColor(image, gray, Imgproc.COLOR_BGR2GRAY);
 
-            // Otsu thresholding
             Imgproc.threshold(gray, binary, 0, 255, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU);
 
-            // Морфологично отваряне за премахване на шум
             Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
             Imgproc.morphologyEx(binary, binary, Imgproc.MORPH_OPEN, kernel, new Point(-1, -1), 2);
 
-            // Distance transform
             Mat dist = new Mat();
             Imgproc.distanceTransform(binary, dist, Imgproc.DIST_L2, 5);
 
-            // Find sure foreground
             Mat sureFg = new Mat();
             Core.MinMaxLocResult minmax = Core.minMaxLoc(dist);
             Imgproc.threshold(dist, sureFg, 0.5 * minmax.maxVal, 255, Imgproc.THRESH_BINARY);
 
-            // Find sure background
             Mat sureBg = new Mat();
             Imgproc.dilate(binary, sureBg, kernel, new Point(-1, -1), 3);
 
-            // Find unknown region
             Mat unknown = new Mat();
             sureFg.convertTo(sureFg, CvType.CV_8U);
             Core.subtract(sureBg, sureFg, unknown);
 
-            // Marker labelling
             Mat markers = new Mat();
             Imgproc.connectedComponents(sureFg, markers);
             Core.add(markers, new Scalar(1), markers);
             markers.setTo(new Scalar(0), unknown);
 
-            // Apply watershed
             Imgproc.watershed(image, markers);
 
-            // Създаване на маска (всичко освен границите и фона)
             Mat finalMask = new Mat();
             Mat boundaryMat = new Mat(markers.size(), markers.type(), new Scalar(-1));
             Mat backgroundMat = new Mat(markers.size(), markers.type(), new Scalar(1));
 
-            // Маска за всичко което не е граница (-1)
             Core.compare(markers, boundaryMat, finalMask, Core.CMP_NE);
 
-            // Премахваме и фона (1)
             Mat notBackground = new Mat();
             Core.compare(markers, backgroundMat, notBackground, Core.CMP_NE);
             Core.bitwise_and(finalMask, notBackground, finalMask);
@@ -138,16 +115,13 @@ public class OpenCVSegmentationService {
     }
 
     private Mat bufferedImageToMat(BufferedImage image) {
-        // Конвертиране на BufferedImage към BGR цветово пространство
         BufferedImage bgrImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D graphics = bgrImage.createGraphics();
         graphics.drawImage(image, 0, 0, null);
         graphics.dispose();
-
         byte[] pixels = ((DataBufferByte) bgrImage.getRaster().getDataBuffer()).getData();
         Mat mat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC3);
         mat.put(0, 0, pixels);
-
         return mat;
     }
 
@@ -155,14 +129,12 @@ public class OpenCVSegmentationService {
         int rows = mask.rows();
         int cols = mask.cols();
         boolean[] result = new boolean[rows * cols];
-
         byte[] data = new byte[rows * cols];
         mask.get(0, 0, data);
 
         for (int i = 0; i < data.length; i++) {
-            result[i] = (data[i] & 0xFF) > 127; // Threshold at 127
+            result[i] = (data[i] & 0xFF) > 127;
         }
-
         return result;
     }
 
@@ -170,12 +142,10 @@ public class OpenCVSegmentationService {
         int w = input.getWidth();
         int h = input.getHeight();
 
-        // Създаване на изображения
         BufferedImage maskImage = createMaskImage(objectMask, w, h);
         BufferedImage overlayImage = createOverlayImage(input, objectMask, w, h);
         BufferedImage recoloredImage = createRecoloredImage(input, objectMask, w, h);
 
-        // Изчисляване на статистики
         int totalPixels = 0;
         for (boolean pixel : objectMask) {
             if (pixel) totalPixels++;
@@ -188,7 +158,7 @@ public class OpenCVSegmentationService {
                 method, totalPixels, percentages.get(0));
 
         return new SegmentationResult(
-                w, h, 0, 1, // threshold = 0 за OpenCV методи
+                w, h, 0, 1,
                 toPng(maskImage), toPng(overlayImage), toPng(recoloredImage),
                 areas, percentages
         );
@@ -202,12 +172,11 @@ public class OpenCVSegmentationService {
             int y = i / w;
 
             if (objectMask[i]) {
-                mask.setRGB(x, y, 0xFF00B4FF); // Синьо за обект
+                mask.setRGB(x, y, 0xFF00B4FF);
             } else {
-                mask.setRGB(x, y, 0xFF000000); // Черно за фон
+                mask.setRGB(x, y, 0xFF000000);
             }
         }
-
         return mask;
     }
 
@@ -216,7 +185,6 @@ public class OpenCVSegmentationService {
         Graphics2D g2d = overlay.createGraphics();
         g2d.drawImage(input, 0, 0, null);
 
-        // Добавяне на полупрозрачно запълване
         for (int i = 0; i < objectMask.length; i++) {
             if (objectMask[i]) {
                 int x = i % w;
@@ -227,7 +195,6 @@ public class OpenCVSegmentationService {
                 int g = (originalRGB >> 8) & 0xFF;
                 int b = originalRGB & 0xFF;
 
-                // Blend with blue
                 int newR = (int)(r * 0.7 + 0 * 0.3);
                 int newG = (int)(g * 0.7 + 180 * 0.3);
                 int newB = (int)(b * 0.7 + 255 * 0.3);
@@ -235,7 +202,6 @@ public class OpenCVSegmentationService {
                 overlay.setRGB(x, y, 0xFF000000 | (newR << 16) | (newG << 8) | newB);
             }
         }
-
         g2d.dispose();
         return overlay;
     }
@@ -246,7 +212,6 @@ public class OpenCVSegmentationService {
         g2d.drawImage(input, 0, 0, null);
         g2d.dispose();
 
-        // Tint обектите
         for (int i = 0; i < objectMask.length; i++) {
             if (objectMask[i]) {
                 int x = i % w;
@@ -264,7 +229,6 @@ public class OpenCVSegmentationService {
                 recolored.setRGB(x, y, 0xFF000000 | (newR << 16) | (newG << 8) | newB);
             }
         }
-
         return recolored;
     }
 

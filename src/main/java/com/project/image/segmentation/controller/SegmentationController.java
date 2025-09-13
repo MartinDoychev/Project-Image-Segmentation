@@ -78,36 +78,30 @@ public class SegmentationController {
 
         BufferedImage input = loadAndValidateImage(file);
 
-        // В handleUpload метода, замени try блока с този:
-
         try {
             // K-means сегментация (традиционна)
             SegmentationResult kmeansResult = segmentationService.segment(input, minRegionSize);
             var kmeansOverlay = storageService.storeResultImage(kmeansResult.outlinePng());
             var kmeansMask = storageService.storeResultImage(kmeansResult.maskPng());
 
-            // GrabCut сегментация (ML-подобна)
+            // GrabCut сегментация (ML обучен модел)
             SegmentationResult grabCutResult = openCvService.segmentWithGrabCut(input);
             var grabCutOverlay = storageService.storeResultImage(grabCutResult.outlinePng());
             var grabCutMask = storageService.storeResultImage(grabCutResult.maskPng());
 
-            // Популиране на модела
             model.addAttribute("originalPath", "/" + storedOriginal.relativeWebPath());
 
-            // K-means резултати
             model.addAttribute("kmeansOverlayPath", "/" + kmeansOverlay.relativeWebPath());
             model.addAttribute("kmeansMaskPath", "/" + kmeansMask.relativeWebPath());
             model.addAttribute("kmeansSegments", kmeansResult.segmentCount());
             model.addAttribute("kmeansAreaPercent", String.format("%.2f",
                     kmeansResult.areasPercent().stream().mapToDouble(Double::doubleValue).sum()));
 
-            // GrabCut резултати
             model.addAttribute("grabCutOverlayPath", "/" + grabCutOverlay.relativeWebPath());
             model.addAttribute("grabCutMaskPath", "/" + grabCutMask.relativeWebPath());
             model.addAttribute("grabCutAreaPercent", String.format("%.2f",
                     grabCutResult.areasPercent().stream().mapToDouble(Double::doubleValue).sum()));
 
-            // Общи данни
             model.addAttribute("width", input.getWidth());
             model.addAttribute("height", input.getHeight());
             model.addAttribute("totalPixels", input.getWidth() * input.getHeight());

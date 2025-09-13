@@ -4,10 +4,8 @@ import com.project.image.segmentation.exceptions.StorageException;
 import com.project.image.segmentation.service.StorageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import static org.assertj.core.api.Assertions.*;
 
 class StorageServiceTest {
